@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ganache Wallet Viewer with Logs</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.9.0/dist/web3.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .log-box { border: 1px solid #ccc; padding: 10px; margin-top: 20px; max-height: 300px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h2>🧾 Ganache Wallet Viewer</h2>
+  <p><strong>Account:</strong> <span id="account">Loading...</span></p>
+  <p><strong>Balance:</strong> <span id="balance">Loading...</span> ETH</p>
+  <button onclick="sendTransaction()">Send 0.01 ETH to Burn</button>
+  <p id="status"></p>
+
+  <h3>📜 Transaction Logs (All from Block 0)</h3>
+  <div class="log-box" id="logBox">Loading logs...</div>
+
+  <script>
+    let web3;
+    let account;
+
+    async function connectWeb3() {
+      web3 = new Web3("http://127.0.0.1:8545");
+      const accounts = await web3.eth.getAccounts();
+      account = accounts[0];
+      document.getElementById("account").innerText = account;
+      await updateBalance();
+      await loadTransactionLogs();
+    }
+
+    async function updateBalance() {
+      const balance = await web3.eth.getBalance(account);
+      document.getElementById("balance").innerText = web3.utils.fromWei(balance, "ether");
+    }
+
+    async function sendTransaction() {
+      document.getElementById("status").innerText = "⏳ Sending transaction...";
+
+      try {
+        const tx = await web3.eth.sendTransaction({
+          from: account,
+          to: "0x000000000000000000000000000000000000dead",
+          value: web3.utils.toWei("0.01", "ether")
+        });
+
+        document.getElementById("status").innerText = "✅ Transaction successful!";
+        setTimeout(() => {
+          updateBalance();
+          loadTransactionLogs(); // Refresh logs
+        }, 2000);
+      } catch (error) {
+        document.getElementById("status").innerText = "❌ Error: " + error.message;
+      }
+    }
+
+    async function loadTransactionLogs() {
+      const latestBlock = await web3.eth.getBlockNumber();
+      const logBox = document.getElementById("logBox");
+      logBox.innerHTML = ""; // Clear previous logs
+
+      for (let i = 0; i <= latestBlock; i++) {
+        const block = await web3.eth.getBlock(i, true);
+        if (block && block.transactions.length > 0) {
+          block.transactions.forEach((tx) => {
+            const logEntry = document.createElement("div");
+            logEntry.innerHTML = `
+              🔹 <strong>Tx Hash:</strong> ${tx.hash}<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<strong>From:</strong> ${tx.from}<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<strong>To:</strong> ${tx.to}<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<strong>Value:</strong> ${web3.utils.fromWei(tx.value, "ether")} ETH<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<strong>Block:</strong> ${block.number}
+              <hr>
+            `;
+            logBox.appendChild(logEntry);
+          });
+        }
+      }
+
+      if (logBox.innerHTML === "") {
+        logBox.innerText = "No transactions found.";
+      }
+    }
+
+    window.onload = connectWeb3;
+  </script>
+</body>
+</html>

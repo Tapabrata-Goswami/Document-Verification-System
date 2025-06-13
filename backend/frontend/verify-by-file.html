@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Document Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f9f9f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    input[type="file"] {
+      margin-bottom: 1rem;
+    }
+    .status {
+      margin-top: 1rem;
+      font-weight: bold;
+      white-space: pre-wrap;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    .verified {
+      background-color: #e6ffed;
+      color: #2e7d32;
+      border: 1px solid #2e7d32;
+    }
+    .not-found {
+      background-color: #ffebee;
+      color: #c62828;
+      border: 1px solid #c62828;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🔍 Verify Document</h2>
+    <form id="uploadForm">
+      <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required />
+      <br />
+      <button type="submit">Check Document</button>
+    </form>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById("fileInput");
+      const status = document.getElementById("status");
+
+      if (!fileInput.files[0]) {
+        status.textContent = "⚠️ Please select a file.";
+        status.className = "status not-found";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      status.textContent = "⏳ Checking document on blockchain...";
+      status.className = "status";
+
+      try {
+        const response = await fetch("http://localhost:3000/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const result = await response.json();
+        console.log(result);
+
+        if (response.status === 404 || result.verified === false) {
+            status.textContent = `❌ Document not found on blockchain.
+• Input Hash: ${result.inputHash}`;
+          status.textContent = `❌ Document not found on blockchain.\n\nHash: ${result.fileHash || 'N/A'}`;
+          status.className = "status not-found";
+        } else {
+            status.textContent = `✅ Verified Document
+            • Input Hash: ${result.inputHash}
+            • On-chain Hash: ${result.fileHash}
+            • Valid: ${result.isValid ? "Yes" : "No"}
+            • Owner: ${result.owner}`;
+        }
+      } catch (err) {
+        console.error(err);
+        status.textContent = "❌ Error verifying document. Please try again.";
+        status.className = "status not-found";
+      }
+    });
+  </script>
+</body>
+</html>

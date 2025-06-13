@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><title>Check</title></head>
+<body>
+  <h1>Check Document</h1>
+  <input type="text" id="hash" placeholder="Enter document hash">
+  <button onclick="check()">Check</button>
+  <pre id="result"></pre>
+
+  <script>
+    async function check() {
+      const hash = document.getElementById("hash").value;
+      const res = await fetch(`/check/${hash}`);
+      const data = await res.json();
+      document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>

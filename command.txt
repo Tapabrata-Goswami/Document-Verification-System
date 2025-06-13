@@ -1,0 +1,21 @@
+# 1. Start Ganache CLI
+ganache-cli
+
+# 2. Compile and deploy contract
+truffle compile
+truffle migrate
+truffle migrate --network development
+
+# 3. Start ML Flask server
+cd ml-model
+pip install flask torch pandas
+python app.py
+
+# 4. Start Node.js backend
+cd backend
+npm install express multer axios cors form-data web3
+node index.js
+
+# 5. Visit:
+# http://localhost:3000/register to register a doc
+# http://localhost:3000/check to check hash status
